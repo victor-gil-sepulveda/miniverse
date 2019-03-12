@@ -2,9 +2,7 @@ import datetime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Enum
 import enum
-
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.sqltypes import Boolean
 
 Base = declarative_base()
 
@@ -21,9 +19,16 @@ class MovementType(enum.IntEnum):
     CARD_WITHDRAWAL = 4
 
 
+class CreditCardStatus(enum.IntEnum):
+    ACTIVE = 1
+    CANCELLED = 2
+
+
 USER_TABLE = "user"
 TRANSFER_TABLE = "transfer"
 MOVEMENT_TABLE = "movement"
+CREDITCARD_TABLE = "creditcard"
+CARDMOVEMENT_TABLE = "cardmovement"
 
 
 class User(Base):
@@ -32,6 +37,26 @@ class User(Base):
     pass_hash = Column(String(256), nullable=False)
     funds = Column(Float, default=0.0)
     picture_path = Column(String(256), nullable=True)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class CreditCard(Base):
+    __tablename__ = CREDITCARD_TABLE
+    id = Column(String(16), primary_key=True)
+    issued = Column(DateTime, nullable=True)
+    active_since = Column(DateTime, nullable=True)
+    expiry = Column(DateTime, nullable=True)
+    status = Column(Enum(CreditCardStatus), nullable=False)
+    user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'))
+    user = relationship("User", foreign_keys=[user_id], backref="cards")
+
+
+class CardMovement(Base):
+    __tablename__ = CARDMOVEMENT_TABLE
+    user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'), primary_key=True)
+    user = relationship("User", foreign_keys=[user_id])
+    movement_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'), primary_key=True)
+    movement = relationship('Movement', foreign_keys=[movement_id])
 
 
 class Movement(Base):
@@ -40,6 +65,7 @@ class Movement(Base):
     amount = Column(Float, default=0.0)
     user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'))
     user = relationship("User", foreign_keys=[user_id])
+    type = Column(Enum(MovementType), nullable=False)
 
 
 class Transfer(Base):
@@ -52,3 +78,6 @@ class Transfer(Base):
 
     deposit_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'))
     deposit = relationship("Movement", foreign_keys=[deposit_id])
+
+    # Transfer comment
+    comment = Column(String(256), nullable=False)
