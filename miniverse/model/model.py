@@ -70,8 +70,9 @@ class Movement(Base):
 
 class Transfer(Base):
     __tablename__ = TRANSFER_TABLE
-    id = Column(Integer, primary_key=True)
-    # constraint users are not equal, and amounts are equal with opposed sign
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Constraint users are not equal, and amounts are equal with opposed sign
     # and types are TRANSFER_DEPOSIT and TRANSFER_WITHDRAWAL
     withdrawal_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'))
     withdrawal = relationship("Movement", foreign_keys=[withdrawal_id])
@@ -81,3 +82,6 @@ class Transfer(Base):
 
     # Transfer comment
     comment = Column(String(256), nullable=False)
+
+    # The transfer visibility
+    type = Column(Enum(TransferType), nullable=False)

@@ -4,11 +4,12 @@ import os
 import unittest
 import os.path
 import datetime
+
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 import miniverse.model.test as test_module
-from miniverse.model.model import Base, User, Movement, MovementType
-from miniverse.model.schemas import UserSchema, MovementSchema
+from miniverse.model.model import Base, User, Movement, MovementType, TransferType, Transfer
+from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema
 
 
 class TestModel(unittest.TestCase):
@@ -37,10 +38,18 @@ class TestModel(unittest.TestCase):
                      created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
 
         movement1 = Movement(user=john, type=MovementType.CARD_WITHDRAWAL, amount=-10.0)
+        movement2 = Movement(user=susan, type=MovementType.TRANSFER_WITHDRAWAL, amount=-5.0)
+        movement3 = Movement(user=susan, type=MovementType.TRANSFER_DEPOSIT, amount=5.0)
+
+        transfer = Transfer(withdrawal=movement2,
+                            deposit=movement3,
+                            comment="That was a great dinner!!",
+                            type=TransferType.PUBLIC)
 
         session.add_all([
             john, susan,
-            movement1
+            movement1, movement2, movement3,
+            transfer
         ])
 
         session.commit()
@@ -60,6 +69,10 @@ class TestModel(unittest.TestCase):
         movement_schema = MovementSchema()
         for b in self.session.query(Movement).all():
             data.append(movement_schema.dump(b).data)
+
+        transfer_schema = TransferSchema()
+        for b in self.session.query(Transfer).all():
+            data.append(transfer_schema.dump(b).data)
 
         print json.dumps(data, indent=4, sort_keys=True)
 
