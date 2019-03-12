@@ -53,8 +53,7 @@ class CreditCard(Base):
 
 class CardMovement(Base):
     __tablename__ = CARDMOVEMENT_TABLE
-    user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'), primary_key=True)
-    user = relationship("User", foreign_keys=[user_id])
+    id = Column(Integer, primary_key=True, autoincrement=True)
     movement_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'), primary_key=True)
     movement = relationship('Movement', foreign_keys=[movement_id])
 
