@@ -22,6 +22,7 @@ class CardUri(fields.Field):
 class UserSchema(ModelSchema):
     class Meta:
         model = User
+        exclude = ("cards",)
 
 
 class MovementSchema(ModelSchema):

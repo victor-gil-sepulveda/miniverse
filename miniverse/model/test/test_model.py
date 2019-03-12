@@ -8,8 +8,10 @@ import datetime
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 import miniverse.model.test as test_module
-from miniverse.model.model import Base, User, Movement, MovementType, TransferType, Transfer
-from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema
+from miniverse.model.model import Base, User, Movement, MovementType, TransferType, Transfer, CreditCard, \
+    CreditCardMovement, CreditCardStatus
+from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema, CreditCardMovementSchema, \
+    CreditCardSchema
 
 
 class TestModel(unittest.TestCase):
@@ -37,18 +39,24 @@ class TestModel(unittest.TestCase):
                      pass_hash="B78469618FB15871B9508DEFD1FF70014747C1F918E4185425C5F2BBEA2A4E5D",
                      created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
 
-        movement1 = Movement(user=john, type=MovementType.CARD_WITHDRAWAL, amount=-10.0)
-        movement2 = Movement(user=susan, type=MovementType.TRANSFER_WITHDRAWAL, amount=-5.0)
-        movement3 = Movement(user=susan, type=MovementType.TRANSFER_DEPOSIT, amount=5.0)
+        # John pays the dinner (10 eu)
+        john_card = CreditCard(user=john,
+                               number="4929867030624094",
+                               status=CreditCardStatus.ACTIVE) # yeha! a Visa cc!
+        cc_movement = CreditCardMovement(card=john_card, amount=-10)
 
-        transfer = Transfer(withdrawal=movement2,
-                            deposit=movement3,
-                            comment="That was a great dinner!!",
+        # But they share expenses :) (5 and 5 eu!)
+        movement1 = Movement(user=susan, type=MovementType.TRANSFER_WITHDRAWAL, amount=-5.0)
+        movement2 = Movement(user=john, type=MovementType.TRANSFER_DEPOSIT, amount=5.0)
+        transfer = Transfer(withdrawal=movement1,
+                            deposit=movement2,
+                            comment="This is your half. That was a great dinner!!",
                             type=TransferType.PUBLIC)
 
         session.add_all([
             john, susan,
-            movement1, movement2, movement3,
+            movement1, movement2,
+            cc_movement,
             transfer
         ])
 
@@ -74,10 +82,16 @@ class TestModel(unittest.TestCase):
         for b in self.session.query(Transfer).all():
             data.append(transfer_schema.dump(b).data)
 
-        print json.dumps(data, indent=4, sort_keys=True)
+        credit_card_schema = CreditCardSchema()
+        for b in self.session.query(CreditCard).all():
+            data.append(credit_card_schema.dump(b).data)
 
-        # # fp = open(os.path.join(self.data_folder, "loaded_data.json"), "w")
-        # # json.dump(data, fp=fp, indent=4, sort_keys=True)
+        cc_movement_schema = CreditCardMovementSchema()
+        for b in self.session.query(CreditCardMovement).all():
+            data.append(cc_movement_schema.dump(b).data)
+
+        fp = open(os.path.join(self.data_folder, "loaded_data.json"), "w")
+        json.dump(data, fp=fp, indent=4, sort_keys=True)
         #
         # fp = open(os.path.join(self.data_folder, "loaded_data.json"), "r")
         # expected = json.load(fp)

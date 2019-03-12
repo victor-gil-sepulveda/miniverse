@@ -16,7 +16,6 @@ class MovementType(enum.IntEnum):
     TRANSFER_DEPOSIT = 1
     TRANSFER_WITHDRAWAL = 2
     FUNDS_DEPOSIT = 3
-    CARD_WITHDRAWAL = 4
 
 
 class CreditCardStatus(enum.IntEnum):
@@ -43,29 +42,29 @@ class User(Base):
 
 class CreditCard(Base):
     __tablename__ = CREDITCARD_TABLE
-    id = Column(String(16), primary_key=True)
+    number = Column(String(16), primary_key=True)
     issued = Column(DateTime, nullable=True)
     active_since = Column(DateTime, nullable=True)
     expiry = Column(DateTime, nullable=True)
     status = Column(Enum(CreditCardStatus), default=CreditCardStatus.INACTIVE)
-    user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'))
-    user = relationship("User", foreign_keys=[user_id], backref="cards")
+    user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
+    user = relationship("User", foreign_keys=[user_name], backref="cards")
 
 
 class CreditCardMovement(Base):
     __tablename__ = CCMOVEMENT_TABLE
     id = Column(Integer, primary_key=True, autoincrement=True)
-    amount = Column(Float, default=0.0)
-    card_id = Column(Integer, ForeignKey(CREDITCARD_TABLE + '.id'))
-    card = relationship("Card", foreign_keys=[card_id])
+    amount = Column(Float, nullable=False)
+    card_number = Column(Integer, ForeignKey(CREDITCARD_TABLE + '.number'))
+    card = relationship("CreditCard", foreign_keys=[card_number])
 
 
 class Movement(Base):
     __tablename__ = MOVEMENT_TABLE
     id = Column(Integer, primary_key=True, autoincrement=True)
-    amount = Column(Float, default=0.0)
-    user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'))
-    user = relationship("User", foreign_keys=[user_id])
+    amount = Column(Float, nullable=False)
+    user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
+    user = relationship("User", foreign_keys=[user_name])
     type = Column(Enum(MovementType), nullable=False)
 
 
