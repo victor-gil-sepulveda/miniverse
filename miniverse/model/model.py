@@ -20,6 +20,7 @@ class MovementType(enum.IntEnum):
 
 
 class CreditCardStatus(enum.IntEnum):
+    INACTIVE = 0
     ACTIVE = 1
     CANCELLED = 2
 
@@ -28,6 +29,7 @@ USER_TABLE = "user"
 TRANSFER_TABLE = "transfer"
 MOVEMENT_TABLE = "movement"
 CREDITCARD_TABLE = "creditcard"
+CCMOVEMENT_TABLE = "creditcard_movement"
 
 
 class User(Base):
@@ -45,9 +47,17 @@ class CreditCard(Base):
     issued = Column(DateTime, nullable=True)
     active_since = Column(DateTime, nullable=True)
     expiry = Column(DateTime, nullable=True)
-    status = Column(Enum(CreditCardStatus), nullable=False)
+    status = Column(Enum(CreditCardStatus), default=CreditCardStatus.INACTIVE)
     user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'))
     user = relationship("User", foreign_keys=[user_id], backref="cards")
+
+
+class CreditCardMovement(Base):
+    __tablename__ = CCMOVEMENT_TABLE
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    amount = Column(Float, default=0.0)
+    card_id = Column(Integer, ForeignKey(CREDITCARD_TABLE + '.id'))
+    card = relationship("Card", foreign_keys=[card_id])
 
 
 class Movement(Base):
