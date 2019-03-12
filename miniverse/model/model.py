@@ -28,7 +28,6 @@ USER_TABLE = "user"
 TRANSFER_TABLE = "transfer"
 MOVEMENT_TABLE = "movement"
 CREDITCARD_TABLE = "creditcard"
-CARDMOVEMENT_TABLE = "cardmovement"
 
 
 class User(Base):
@@ -49,13 +48,6 @@ class CreditCard(Base):
     status = Column(Enum(CreditCardStatus), nullable=False)
     user_id = Column(Integer, ForeignKey(USER_TABLE + '.name'))
     user = relationship("User", foreign_keys=[user_id], backref="cards")
-
-
-class CardMovement(Base):
-    __tablename__ = CARDMOVEMENT_TABLE
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    movement_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'), primary_key=True)
-    movement = relationship('Movement', foreign_keys=[movement_id])
 
 
 class Movement(Base):
