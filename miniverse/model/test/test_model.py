@@ -90,13 +90,13 @@ class TestModel(unittest.TestCase):
         for b in self.session.query(CreditCardMovement).all():
             data.append(cc_movement_schema.dump(b).data)
 
-        fp = open(os.path.join(self.data_folder, "loaded_data.json"), "w")
-        json.dump(data, fp=fp, indent=4, sort_keys=True)
-        #
-        # fp = open(os.path.join(self.data_folder, "loaded_data.json"), "r")
-        # expected = json.load(fp)
-        # self.maxDiff = None
-        # self.assertItemsEqual(data, expected)
+        # fp = open(os.path.join(self.data_folder, "loaded_data.json"), "w")
+        # json.dump(data, fp=fp, indent=4, sort_keys=True)
+
+        fp = open(os.path.join(self.data_folder, "loaded_data.json"), "r")
+        expected = json.load(fp)
+        self.maxDiff = None
+        self.assertItemsEqual(data, expected)
 
 if __name__ == '__main__':
     unittest.main()

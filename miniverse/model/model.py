@@ -7,21 +7,21 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-class TransferType(enum.IntEnum):
-    PUBLIC = 1
-    PRIVATE = 2
+class TransferType:
+    PUBLIC = "PUBLIC"
+    PRIVATE = "PRIVATE"
 
 
-class MovementType(enum.IntEnum):
-    TRANSFER_DEPOSIT = 1
-    TRANSFER_WITHDRAWAL = 2
-    FUNDS_DEPOSIT = 3
+class MovementType:
+    TRANSFER_DEPOSIT = "TRANSFER_DEPOSIT"
+    TRANSFER_WITHDRAWAL = "TRANSFER_WITHDRAWAL"
+    FUNDS_DEPOSIT = "FUNDS_DEPOSIT"
 
 
-class CreditCardStatus(enum.IntEnum):
-    INACTIVE = 0
-    ACTIVE = 1
-    CANCELLED = 2
+class CreditCardStatus:
+    INACTIVE = "INACTIVE"
+    ACTIVE = "ACTIVE"
+    CANCELLED = "CANCELLED"
 
 
 USER_TABLE = "user"
@@ -46,7 +46,7 @@ class CreditCard(Base):
     issued = Column(DateTime, nullable=True)
     active_since = Column(DateTime, nullable=True)
     expiry = Column(DateTime, nullable=True)
-    status = Column(Enum(CreditCardStatus), default=CreditCardStatus.INACTIVE)
+    status = Column(String(16), default=CreditCardStatus.INACTIVE) # Enum(CreditCardStatus)
     user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
     user = relationship("User", foreign_keys=[user_name], backref="cards")
 
@@ -65,7 +65,7 @@ class Movement(Base):
     amount = Column(Float, nullable=False)
     user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
     user = relationship("User", foreign_keys=[user_name])
-    type = Column(Enum(MovementType), nullable=False)
+    type = Column(String(16), nullable=False) # Enum(MovementType)
 
 
 class Transfer(Base):
@@ -84,4 +84,4 @@ class Transfer(Base):
     comment = Column(String(256), nullable=False)
 
     # The transfer visibility
-    type = Column(Enum(TransferType), nullable=False)
+    type = Column(String(16), nullable=False) #Enum(TransferType)
