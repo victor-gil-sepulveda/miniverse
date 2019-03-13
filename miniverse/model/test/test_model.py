@@ -46,12 +46,15 @@ class TestModel(unittest.TestCase):
         cc_movement = CreditCardMovement(card=john_card, amount=-10)
 
         # But they share expenses :) (5 and 5 eu!)
-        movement1 = Movement(user=susan, type=MovementType.TRANSFER_WITHDRAWAL, amount=-5.0)
-        movement2 = Movement(user=john, type=MovementType.TRANSFER_DEPOSIT, amount=5.0)
+        movement1 = Movement(user=susan, type=MovementType.TRANSFER_WITHDRAWAL, amount=-5.0,
+                             created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
+        movement2 = Movement(user=john, type=MovementType.TRANSFER_DEPOSIT, amount=5.0,
+                             created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
         transfer = Transfer(withdrawal=movement1,
                             deposit=movement2,
                             comment="This is your half. That was a great dinner!!",
-                            type=TransferType.PUBLIC)
+                            type=TransferType.PUBLIC,
+                            created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
 
         session.add_all([
             john, susan,
