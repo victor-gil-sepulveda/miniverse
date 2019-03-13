@@ -4,6 +4,7 @@
         "funds": 0.0, 
         "name": "john", 
         "pass_hash": "96D9632F363564CC3032521409CF22A852F2032EEC099ED5967C0D000CEC607A", 
+        "phone_number": "+41569882599", 
         "picture_path": null
     }, 
     {
@@ -11,6 +12,7 @@
         "funds": 0.0, 
         "name": "susan", 
         "pass_hash": "B78469618FB15871B9508DEFD1FF70014747C1F918E4185425C5F2BBEA2A4E5D", 
+        "phone_number": "+34615829532", 
         "picture_path": null
     }, 
     {
@@ -18,14 +20,14 @@
         "created": "2010-05-24T00:00:00+00:00", 
         "id": 1, 
         "type": "TRANSFER_WITHDRAWAL", 
-        "user": "/user/susan"
+        "user": "/user/+34615829532"
     }, 
     {
         "amount": 5.0, 
         "created": "2010-05-24T00:00:00+00:00", 
         "id": 2, 
         "type": "TRANSFER_DEPOSIT", 
-        "user": "/user/john"
+        "user": "/user/+41569882599"
     }, 
     {
         "comment": "This is your half. That was a great dinner!!", 

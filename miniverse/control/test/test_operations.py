@@ -29,23 +29,24 @@ class TestOperations(unittest.TestCase):
         self.session = Session()
 
     def test_user_creation_retrieval(self):
-        user_uri = create_user(self.session, "peter", "--------", 3.0)
-        user_json = get_user(self.session, "peter")
+        user_uri = create_user(self.session, "0000", "peter", "--------", 3.0)
+        user_json = get_user(self.session, "0000")
         del user_json["created"]
-        self.assertEqual("/user/peter", user_uri)
+        self.assertEqual("/user/0000", user_uri)
         expected_json = {
             'funds': 3.0,
             'pass_hash': '--------',
             'picture_path': None,
-            'name': 'peter'
+            'name': 'peter',
+            'phone_number': "0000"
         }
         self.assertDictEqual(expected_json, user_json)
-        peter_balance = get_user_balance(self.session, "peter")
+        peter_balance = get_user_balance(self.session, user_json["phone_number"])
         self.assertEqual(3.0, peter_balance)
 
     def test_movement_creation_retrieval(self):
         # Resource creation
-        dean_uri = create_user(self.session, "dean", "0123456789ABCDEF", 100.0)
+        dean_uri = create_user(self.session, "0000", "dean", "0123456789ABCDEF", 100.0)
         movement_uri = create_movement(self.session, dean_uri, -10, movement_type=MovementType.FUNDS_WITHDRAWAL)
         self.assertEqual('/movement/1', movement_uri)
 
@@ -56,7 +57,7 @@ class TestOperations(unittest.TestCase):
         expected_json = {
             'amount': -10.0,
             'type': 'FUNDS_WITHDRAWAL',
-            'user': '/user/dean',
+            'user': '/user/0000',
             'id': 1
         }
         self.assertDictEqual(expected_json, movement_json)
@@ -72,22 +73,22 @@ class TestOperations(unittest.TestCase):
                 'funds': 90.0,
                 'pass_hash': '0123456789ABCDEF',
                 'picture_path': None,
-                'name': 'dean'
+                'name': 'dean',
+                'phone_number': "0000"
             },
             'id': 1
         }
-
         self.assertDictEqual(expected_json, movement_json)
 
     def test_check_user_has_enough_money(self):
-        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 100.0)
+        pep_uri = create_user(self.session, "0000", "pep", "0123456789ABCDEF", 100.0)
         user_id = pep_uri.split("/")[-1]
         check_user_has_enough_money(self.session, user_id, -90)
         with self.assertRaises(NotEnoughMoneyException):
             check_user_has_enough_money(self.session, user_id, -110)
 
     def test_update_user_funds(self):
-        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 100.0)
+        pep_uri = create_user(self.session, "0000", "pep", "0123456789ABCDEF", 100.0)
         user_id = pep_uri.split("/")[-1]
         update_user_funds(self.session, user_id, 10.)
         pep_json = get_user(self.session, user_id)
@@ -97,15 +98,15 @@ class TestOperations(unittest.TestCase):
         # susan -> 25 -> pep, Susan gives 25 to Pep
 
         # Create the users
-        susan_uri = create_user(self.session, "susan", "0123456789ABCDEF", 100.0)
+        susan_uri = create_user(self.session, "0000", "susan", "0123456789ABCDEF", 100.0)
         susan_id = susan_uri.split("/")[-1]
-        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 50.0)
+        pep_uri = create_user(self.session, "0001", "pep", "0123456789ABCDEF", 50.0)
         pep_id = pep_uri.split("/")[-1]
 
         # Create the movements
         susan_movement_uri = create_movement(self.session, susan_uri, -25,
-                                         movement_type=MovementType.TRANSFER_WITHDRAWAL,
-                                         commit=False)
+                                             movement_type=MovementType.TRANSFER_WITHDRAWAL,
+                                             commit=False)
         pep_movement_uri = create_movement(self.session, pep_uri, 25,
                                            movement_type=MovementType.TRANSFER_DEPOSIT,
                                            commit=False)
@@ -134,12 +135,12 @@ class TestOperations(unittest.TestCase):
             'deposit': {
                 'amount': 25.0,
                 'type': 'TRANSFER_DEPOSIT',
-                'user': '/user/pep',
+                'user': '/user/0001',
                 'id': 2},
             'withdrawal': {
                 'amount': -25.0,
                 'type': 'TRANSFER_WITHDRAWAL',
-                'user': '/user/susan',
+                'user': '/user/0000',
                 'id': 1
             },
             'type': 'PUBLIC',
@@ -157,24 +158,24 @@ class TestOperations(unittest.TestCase):
     def test_check_transfer_is_symetric(self):
         # REPEATED CODE AHEAD. TODO: REFACTOR
         # Create the users
-        susan_uri = create_user(self.session, "susan", "0123456789ABCDEF", 100.0)
+        susan_uri = create_user(self.session, "0000", "susan", "0123456789ABCDEF", 100.0)
         susan_id = susan_uri.split("/")[-1]
-        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 50.0)
+        pep_uri = create_user(self.session, "0001", "pep", "0123456789ABCDEF", 50.0)
         pep_id = pep_uri.split("/")[-1]
 
         # Create the movements
         # ID: 1
         create_movement(self.session, susan_uri, -25,
-                                             movement_type=MovementType.TRANSFER_WITHDRAWAL,
-                                             commit=False)
+                        movement_type=MovementType.TRANSFER_WITHDRAWAL,
+                        commit=False)
         # ID: 2
         create_movement(self.session, pep_uri, 25,
-                                           movement_type=MovementType.TRANSFER_DEPOSIT,
-                                           commit=False)
+                        movement_type=MovementType.TRANSFER_DEPOSIT,
+                        commit=False)
         # ID: 3
         create_movement(self.session, pep_uri, 30,
-                                           movement_type=MovementType.TRANSFER_DEPOSIT,
-                                           commit=False)
+                        movement_type=MovementType.TRANSFER_DEPOSIT,
+                        commit=False)
 
         # ID: 4
         # A 0 money movement is not allowed

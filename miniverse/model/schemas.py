@@ -26,7 +26,7 @@ class UserSchema(ModelSchema):
 
 
 class MovementSchema(ModelSchema):
-    user = UserUri(attribute="user_name", dump_only=True)
+    user = UserUri(attribute="user_phone", dump_only=True)
 
     class Meta:
         model = Movement

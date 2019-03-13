@@ -4,22 +4,22 @@ from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema
 from miniverse.service.urldefines import USER_GET_URL, MOVEMENT_GET_URL, TRANSFER_GET_URL
 
 
-def create_user(session, name, pass_hash, funds=0.0):
+def create_user(session, phone_number, name, pass_hash, funds=0.0):
     """
     Inserts a new user/player in the DB.
     """
     # Perform the db job
-    user = User(name=name, pass_hash=pass_hash, funds=funds)
+    user = User(phone_number=phone_number, name=name, pass_hash=pass_hash, funds=funds)
     session.add(user)
     session.commit()
-    return USER_GET_URL.format(user_id=name)
+    return USER_GET_URL.format(user_id=phone_number)
 
 
-def get_user(session, name):
+def get_user(session, user_id):
     """
     Gets a user with id = name from the database. Returns a json.
     """
-    user = session.query(User).get(name)
+    user = session.query(User).get(user_id)
     user_schema = UserSchema()
     user_json = user_schema.dump(user).data
     return user_json
@@ -29,7 +29,7 @@ def get_user_balance(session, user_id):
     """
     Gets the funds of a user with user_id = name
     """
-    balance = session.query(User.funds).filter(User.name == user_id).all()
+    balance = session.query(User.funds).filter(User.phone_number == user_id).all()
     return balance[0][0]
 
 
@@ -47,7 +47,7 @@ def update_user_funds(session, user_id, amount):
     """
     Changes user funds by the given quantity 'amount'
     """
-    session.query(User).filter_by(name=user_id).update({'funds': User.funds + amount})
+    session.query(User).filter_by(phone_number=user_id).update({'funds': User.funds + amount})
 
 
 def create_movement(session, user_uri, amount, movement_type, commit=True):
@@ -72,7 +72,7 @@ def create_movement(session, user_uri, amount, movement_type, commit=True):
         check_user_has_enough_money(session, user_id, amount)
 
     # Create the resource
-    movement = Movement(user_name=user_id, amount=amount, type=movement_type)
+    movement = Movement(user_phone=user_id, amount=amount, type=movement_type)
     session.add(movement)
     session.flush()
     movement_id = movement.id

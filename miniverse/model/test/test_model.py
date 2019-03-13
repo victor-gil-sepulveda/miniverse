@@ -31,10 +31,12 @@ class TestModel(unittest.TestCase):
         session = Session()
 
         ## Users
-        john = User(name="john",
+        john = User(phone_number="+41569882599",
+                    name="john",
                     pass_hash="96D9632F363564CC3032521409CF22A852F2032EEC099ED5967C0D000CEC607A",
                     created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
-        susan = User(name="susan",
+        susan = User(phone_number="+34615829532",
+                     name="susan",
                      pass_hash="B78469618FB15871B9508DEFD1FF70014747C1F918E4185425C5F2BBEA2A4E5D",
                      created=datetime.datetime.strptime('24052010', "%d%m%Y").date())
 

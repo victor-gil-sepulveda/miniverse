@@ -44,7 +44,8 @@ CCMOVEMENT_TABLE = "creditcard_movement"
 
 class User(Base):
     __tablename__ = USER_TABLE
-    name = Column(String(32), primary_key=True)
+    phone_number = Column(String(32), primary_key=True)
+    name = Column(String(32))
     pass_hash = Column(String(256), nullable=False)
     funds = Column(Float, default=0.0)
     picture_path = Column(String(256), nullable=True)
@@ -58,8 +59,8 @@ class CreditCard(Base):
     active_since = Column(DateTime, nullable=True)
     expiry = Column(DateTime, nullable=True)
     status = Column(String(16), default=CreditCardStatus.INACTIVE) # Enum(CreditCardStatus)
-    user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
-    user = relationship("User", foreign_keys=[user_name], backref="cards")
+    user_phone = Column(String(32), ForeignKey(USER_TABLE + '.phone_number'))
+    user = relationship("User", foreign_keys=[user_phone], backref="cards")
 
 
 class CreditCardMovement(Base):
@@ -74,8 +75,8 @@ class Movement(Base):
     __tablename__ = MOVEMENT_TABLE
     id = Column(Integer, primary_key=True, autoincrement=True)
     amount = Column(Float, nullable=False)
-    user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
-    user = relationship("User", foreign_keys=[user_name])
+    user_phone = Column(String(32), ForeignKey(USER_TABLE + '.phone_number'))
+    user = relationship("User", foreign_keys=[user_phone])
     type = Column(String(16), nullable=False) # Enum(MovementType)
     created = Column(DateTime, default=datetime.datetime.utcnow)
 
