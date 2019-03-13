@@ -1,13 +1,12 @@
+import json
 import unittest
 from flask.app import Flask
-import json
 from flask_api import status
-import random
-import string
 
-from miniverse.control.operations import create_user
-from miniverse.model.sessionsingleton import DbSessionHolder
+from miniverse.model.model import MovementType
 from miniverse.service.rest import v1
+from miniverse.control.operations import create_user, get_user_balance
+from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.rest.api import setup_rest_api, gen_resource_url, API_PREFIX
 from miniverse.service.rest.tools import parse_status
 
@@ -65,7 +64,43 @@ class TestV1API(unittest.TestCase):
 
         self.assertDictEqual(expected, json.loads(response.data))
 
-    
+    def test_create_movement(self):
+        session = DbSessionHolder(TestV1API.REST_TEST_DB).get_session()
+        create_user(session,
+                    "0000",
+                    "Finn",
+                    "1413434",
+                    233.05)
+
+        endpoint = gen_resource_url(API_PREFIX, v1, "/movement")
+        response = self.client().post(endpoint, data=json.dumps({
+            "user": "0000",
+            "amount": 52,
+            "type": MovementType.FUNDS_DEPOSIT
+        }))
+        self.assertEqual("/movement/1", response.headers["location"])
+
+        # The user balance has changed
+        finn_balance = get_user_balance(session, "0000") # Finn's phone is his ID
+        self.assertEqual(285.05, finn_balance)
+
+        error_response_1 = self.client().post(endpoint, data=json.dumps({
+            "user": "0000",
+            "amount": 0,
+            "type": MovementType.FUNDS_DEPOSIT
+        }))
+        self.assertEqual('{"error":"If no money is moved, this is not a money movement!"}', error_response_1.data.strip())
+        error_response_2 = self.client().post(endpoint, data=json.dumps({
+            "user": "0000",
+            "amount": -300,
+            "type": MovementType.FUNDS_DEPOSIT
+        }))
+        self.assertEqual('{"error":"Not enough money in your wallet!"}', error_response_2.data.strip())
+
+    def test_create_transfer(self):
+        pass
+
+
 
 if __name__ == "__main__":
     unittest.main()
