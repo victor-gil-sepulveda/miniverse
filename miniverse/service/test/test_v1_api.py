@@ -5,6 +5,7 @@ from flask_api import status
 import random
 import string
 
+from miniverse.control.operations import create_user
 from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.rest import v1
 from miniverse.service.rest.api import setup_rest_api, gen_resource_url, API_PREFIX
@@ -48,7 +49,23 @@ class TestV1API(unittest.TestCase):
         }))
         self.assertEqual(status.HTTP_409_CONFLICT, parse_status(response.status))
 
+    def test_balance(self):
+        create_user(DbSessionHolder(TestV1API.REST_TEST_DB).get_session(),
+                    "0000",
+                    "Finn",
+                    "1413434",
+                    233.05)
 
+        endpoint = gen_resource_url(API_PREFIX, v1, "/user/0000/balance")
+        response = self.client().get(endpoint)
+        expected = {
+            "balance": 233.05,
+            "user": "/user/0000"
+        }
+
+        self.assertDictEqual(expected, json.loads(response.data))
+
+    
 
 if __name__ == "__main__":
     unittest.main()
