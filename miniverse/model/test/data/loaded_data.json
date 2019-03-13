@@ -1,0 +1,44 @@
+[
+    {
+        "created": "2010-05-24T00:00:00+00:00", 
+        "funds": 0.0, 
+        "name": "john", 
+        "pass_hash": "96D9632F363564CC3032521409CF22A852F2032EEC099ED5967C0D000CEC607A", 
+        "picture_path": null
+    }, 
+    {
+        "created": "2010-05-24T00:00:00+00:00", 
+        "funds": 0.0, 
+        "name": "susan", 
+        "pass_hash": "B78469618FB15871B9508DEFD1FF70014747C1F918E4185425C5F2BBEA2A4E5D", 
+        "picture_path": null
+    }, 
+    {
+        "amount": -5.0, 
+        "id": 1, 
+        "type": "TRANSFER_WITHDRAWAL"
+    }, 
+    {
+        "amount": 5.0, 
+        "id": 2, 
+        "type": "TRANSFER_DEPOSIT"
+    }, 
+    {
+        "comment": "This is your half. That was a great dinner!!", 
+        "deposit": "/movement/2", 
+        "id": 1, 
+        "type": "PUBLIC", 
+        "withdrawal": "/movement/1"
+    }, 
+    {
+        "active_since": null, 
+        "expiry": null, 
+        "issued": null, 
+        "number": "4929867030624094", 
+        "status": "ACTIVE"
+    }, 
+    {
+        "amount": -10.0, 
+        "id": 1
+    }
+]
