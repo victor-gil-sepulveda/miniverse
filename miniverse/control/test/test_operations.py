@@ -96,15 +96,21 @@ class TestOperations(unittest.TestCase):
         self.assertEqual(110.0, pep_json["funds"])
 
     def test_create_retrieve_transfer(self):
-        # susan -> 25 -> pep
+        # susan -> 25 -> pep, Susan gives 25 to Pep
+
+        # Create the users
         susan_uri = create_user(self.session, "susan", "0123456789ABCDEF", 100.0)
+        susan_id = susan_uri.split("/")[-1]
         pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 50.0)
+        pep_id = pep_uri.split("/")[-1]
+
+        # Create the movements
         susan_movement_uri = create_movement(self.session, susan_uri, -25,
                                          movement_type=MovementType.TRANSFER_WITHDRAWAL,
                                          commit=False)
         pep_movement_uri = create_movement(self.session, pep_uri, 25,
-                                       movement_type=MovementType.TRANSFER_DEPOSIT,
-                                       commit=False)
+                                           movement_type=MovementType.TRANSFER_DEPOSIT,
+                                           commit=False)
 
         transfer_uri = create_transfer(self.session, susan_movement_uri, pep_movement_uri,
                                        "Great lunch!!",
@@ -125,7 +131,6 @@ class TestOperations(unittest.TestCase):
 
         # Try expanding the movements
         transfer_json = get_transfer(self.session, 1, expand=True)
-        print transfer_json
         expected = {
             'comment': 'Great lunch!!',
             'deposit': {
@@ -145,9 +150,11 @@ class TestOperations(unittest.TestCase):
         del transfer_json["created"]
         del transfer_json["withdrawal"]["created"]
         del transfer_json["deposit"]["created"]
-
         self.assertDictEqual(expected, transfer_json)
 
+        # Also, after the transfer susan and pep have the same amount of money
+        self.assertEqual(get_user_balance(self.session, susan_id), get_user_balance(self.session, pep_id))
+        self.assertEqual(75., get_user_balance(self.session, susan_id))
 
 if __name__ == '__main__':
     unittest.main()
