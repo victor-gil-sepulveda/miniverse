@@ -67,7 +67,7 @@ class Movement(Base):
     user_name = Column(Integer, ForeignKey(USER_TABLE + '.name'))
     user = relationship("User", foreign_keys=[user_name])
     type = Column(String(16), nullable=False) # Enum(MovementType)
-
+    created = Column(DateTime, default=datetime.datetime.utcnow)
 
 class Transfer(Base):
     __tablename__ = TRANSFER_TABLE
@@ -86,3 +86,6 @@ class Transfer(Base):
 
     # The transfer visibility
     type = Column(String(16), nullable=False) #Enum(TransferType)
+
+    # For tracking purposes
+    created = Column(DateTime, default=datetime.datetime.utcnow)

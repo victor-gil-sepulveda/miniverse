@@ -48,6 +48,7 @@ class TestOperations(unittest.TestCase):
         # Resource retrieval
         movement_id = int(movement_uri.split("/")[-1])
         movement_json = get_movement(self.session, movement_id)
+        del movement_json["created"]
         expected_json = {
             'amount': -10.0,
             'type': 'FUNDS_WITHDRAWAL',
@@ -58,6 +59,7 @@ class TestOperations(unittest.TestCase):
 
         # Retrieval with expansion
         movement_json = get_movement(self.session, movement_id, expand=True)
+        del movement_json["created"]
         del movement_json["user"]["created"]
         expected_json = {
             'amount': -10.0,
