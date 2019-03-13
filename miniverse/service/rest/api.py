@@ -30,7 +30,7 @@ def setup_rest_api(flask_app):
     api.add_resource(version.Movement,
                      gen_resource_url(API_PREFIX, version, "/movement/<movement_id>"),
                      gen_resource_url(API_PREFIX, version, "/movement"))
-    #
-    # api.add_resource(version.Transfer,
-    #                  gen_resource_url(API_PREFIX, version, "/transfer/<transfer_id>"),
-    #                  gen_resource_url(API_PREFIX, version, "/transfer"))
+
+    api.add_resource(version.Transfer,
+                     gen_resource_url(API_PREFIX, version, "/transfer/<transfer_id>"),
+                     gen_resource_url(API_PREFIX, version, "/transfer"))

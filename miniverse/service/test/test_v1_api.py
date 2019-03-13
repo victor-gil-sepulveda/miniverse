@@ -3,7 +3,7 @@ import unittest
 from flask.app import Flask
 from flask_api import status
 
-from miniverse.model.model import MovementType
+from miniverse.model.model import MovementType, TransferType
 from miniverse.service.rest import v1
 from miniverse.control.operations import create_user, get_user_balance
 from miniverse.model.sessionsingleton import DbSessionHolder
@@ -98,9 +98,33 @@ class TestV1API(unittest.TestCase):
         self.assertEqual('{"error":"Not enough money in your wallet!"}', error_response_2.data.strip())
 
     def test_create_transfer(self):
-        pass
+        session = DbSessionHolder(TestV1API.REST_TEST_DB).get_session()
+        finn_uri = create_user(session,
+                               "0000",
+                               "Finn",
+                               "1413434",
+                               233.05)
 
+        jake_uri = create_user(session,
+                               "0001",
+                               "Jake",
+                               "1413434",
+                               60.)
 
+        transfer_data = {
+            "sender": finn_uri,
+            "receiver": jake_uri,
+            "amount": 13.05,
+            "comment": "I want to get ride of small coins!",
+            "type": TransferType.PUBLIC
+        }
+
+        endpoint = gen_resource_url(API_PREFIX, v1, "/transfer")
+        response = self.client().post(endpoint, data=json.dumps(transfer_data))
+        self.assertEqual("/transfer/1", response.headers["location"])
+        finn_balance = get_user_balance(session, "0000")
+        jake_balance = get_user_balance(session, "0001")
+        self.assertEqual((220.05, 73.0), (finn_balance, jake_balance))
 
 if __name__ == "__main__":
     unittest.main()

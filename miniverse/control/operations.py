@@ -114,7 +114,6 @@ def check_transfer_is_symetric(session, withdrawal_id, deposit_id):
         raise AsymmetricTransferException("In a transfer, the withdrawn amount and deposited amount must have same absolute value.")
 
 
-
 def create_transfer(session, withdrawal_uri, deposit_uri, comment, transfer_type):
     """
     Adds a transfer to the database. The movements have already been created.
