@@ -3,7 +3,9 @@ import os
 import unittest
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
-from miniverse.control.operations import create_user, get_user, get_user_balance, create_movement, get_movement
+from miniverse.control.operations import create_user, get_user, get_user_balance, create_movement, get_movement, \
+    update_user_funds, check_user_has_enough_money
+from miniverse.model.exceptions import NotEnoughMoneyException
 from miniverse.model.model import Base, MovementType
 import miniverse.control.test as test_module
 
@@ -18,8 +20,10 @@ class TestOperations(unittest.TestCase):
 
     def setUp(self):
         # Populate the DB
+        if os.path.exists(TestOperations.TEST_DB):
+            os.remove(TestOperations.TEST_DB)
         engine = create_engine('sqlite:///' + TestOperations.TEST_DB)
-        Base.metadata.drop_all(bind=engine)
+        #Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         Session = sessionmaker(bind=engine)
         self.session = Session()
@@ -78,7 +82,18 @@ class TestOperations(unittest.TestCase):
         print movement_json
 
     def test_check_user_has_enough_money(self):
-        pass
+        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 100.0)
+        user_id = pep_uri.split("/")[-1]
+        check_user_has_enough_money(self.session, user_id, -90)
+        with self.assertRaises(NotEnoughMoneyException):
+            check_user_has_enough_money(self.session, user_id, -110)
+
+    def test_update_user_funds(self):
+        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 100.0)
+        user_id = pep_uri.split("/")[-1]
+        update_user_funds(self.session, user_id, 10.)
+        pep_json = get_user(self.session, user_id)
+        self.assertEqual(110.0, pep_json["funds"])
 
 if __name__ == '__main__':
     unittest.main()
