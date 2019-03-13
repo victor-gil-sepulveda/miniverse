@@ -1,10 +1,7 @@
-from gi._gi import Transfer
-from sqlalchemy.sql.expression import select
-
 from miniverse.model.exceptions import NotEnoughMoneyException
-from miniverse.model.model import User, Movement
-from miniverse.model.schemas import UserSchema, MovementSchema
-from miniverse.service.urldefines import USER_GET_URL, MOVEMENT_GET_URL
+from miniverse.model.model import User, Movement, Transfer, MovementType, TransferType
+from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema
+from miniverse.service.urldefines import USER_GET_URL, MOVEMENT_GET_URL, TRANSFER_GET_URL
 
 
 def create_user(session, name, pass_hash, funds=0.0):
@@ -42,7 +39,6 @@ def check_user_has_enough_money(session, user_id, amount):
     exception is raised. 'amount' is usually a negative number.
     """
     user_funds = get_user_balance(session, user_id)
-    print "user funds", user_funds
     if user_funds + amount < 0:
         raise NotEnoughMoneyException("Not enough money in your wallet!")
 
@@ -61,6 +57,10 @@ def create_movement(session, user_uri, amount, movement_type, commit=True):
     Only commits if 'commit' is set to true. This allows us to completely rollback
     transfers.
     """
+    # Check parameters
+    if movement_type not in MovementType.all_values():
+        raise ValueError(movement_type + " is not a proper MovementType.")
+
     # First we get the user id
     user_id = user_uri.split("/")[-1]
 
@@ -98,16 +98,48 @@ def get_movement(session, movement_id, expand=False):
     return movement_json
 
 
-def create_transfer(session, withdrawal_uri, deposit_uri, comment, type):
+def create_transfer(session, withdrawal_uri, deposit_uri, comment, transfer_type):
+    """
+    Adds a transfer to the database. The movements have already been created.
+    """
+    # Check parameter
+    if transfer_type not in TransferType.all_values():
+        raise ValueError(transfer_type + " is not a proper TransferType.")
+
     # Get the movement ids
     withdrawal_id = int(withdrawal_uri.split("/")[-1])
     deposit_id = int(deposit_uri.split("/")[-1])
+
     transfer = Transfer(withdrawal_id=withdrawal_id,
                         deposit_id=deposit_id,
                         comment=comment,
-                        type=type)
+                        type=transfer_type)
+
+    session.add(transfer)
+    session.flush()
+    transfer_id = transfer.id
+    session.commit()
+    return TRANSFER_GET_URL.format(transfer_id=transfer_id)
 
 
 def get_transfer(session, transfer_id, expand=False):
-    pass
+    """
+    Obtains a transfer from the DB and serializes it to a dict. It will
+    return an "expanded" dict with movement data instead of resource uris
+    if 'expand' is true.
+    """
+    transfer = session.query(Transfer).get(transfer_id)
+    transfer_schema = TransferSchema()
+    transfer_json = transfer_schema.dump(transfer).data
+
+    # If we want to expand the movements
+    if expand:
+        withdrawal_id = int(transfer_json["withdrawal"].split("/")[-1])
+        deposit_id = int(transfer_json["deposit"].split("/")[-1])
+        withdrawal_json = get_movement(session, withdrawal_id)
+        deposit_json = get_movement(session, deposit_id)
+        transfer_json["withdrawal"] = withdrawal_json
+        transfer_json["deposit"] = deposit_json
+
+    return transfer_json
 
