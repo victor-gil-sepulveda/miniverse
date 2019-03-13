@@ -1,7 +1,7 @@
 from miniverse.model.exceptions import NotEnoughMoneyException, AsymmetricTransferException
 from miniverse.model.model import User, Movement, Transfer, MovementType, TransferType
 from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema
-from miniverse.service.urldefines import USER_GET_URL, MOVEMENT_GET_URL, TRANSFER_GET_URL
+from miniverse.service.urldefines import USER_GET_URI, MOVEMENT_GET_URI, TRANSFER_GET_URI
 
 
 def create_user(session, phone_number, name, pass_hash, funds=0.0):
@@ -12,7 +12,7 @@ def create_user(session, phone_number, name, pass_hash, funds=0.0):
     user = User(phone_number=phone_number, name=name, pass_hash=pass_hash, funds=funds)
     session.add(user)
     session.commit()
-    return USER_GET_URL.format(user_id=phone_number)
+    return USER_GET_URI.format(user_id=phone_number)
 
 
 def get_user(session, user_id):
@@ -83,7 +83,7 @@ def create_movement(session, user_uri, amount, movement_type, commit=True):
     # And go go go!
     if commit:
         session.commit()
-    return MOVEMENT_GET_URL.format(movement_id=movement_id)
+    return MOVEMENT_GET_URI.format(movement_id=movement_id)
 
 
 def get_movement(session, movement_id, expand=False):
@@ -140,7 +140,7 @@ def create_transfer(session, withdrawal_uri, deposit_uri, comment, transfer_type
     session.flush()
     transfer_id = transfer.id
     session.commit()
-    return TRANSFER_GET_URL.format(transfer_id=transfer_id)
+    return TRANSFER_GET_URI.format(transfer_id=transfer_id)
 
 
 def get_transfer(session, transfer_id, expand=False):
