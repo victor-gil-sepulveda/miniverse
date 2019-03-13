@@ -4,8 +4,8 @@ import unittest
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 from miniverse.control.operations import create_user, get_user, get_user_balance, create_movement, get_movement, \
-    update_user_funds, check_user_has_enough_money, create_transfer, get_transfer
-from miniverse.model.exceptions import NotEnoughMoneyException
+    update_user_funds, check_user_has_enough_money, create_transfer, get_transfer, check_transfer_is_symetric
+from miniverse.model.exceptions import NotEnoughMoneyException, AsymmetricTransferException
 from miniverse.model.model import Base, MovementType, TransferType
 import miniverse.control.test as test_module
 
@@ -78,8 +78,6 @@ class TestOperations(unittest.TestCase):
         }
 
         self.assertDictEqual(expected_json, movement_json)
-
-        print movement_json
 
     def test_check_user_has_enough_money(self):
         pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 100.0)
@@ -155,6 +153,44 @@ class TestOperations(unittest.TestCase):
         # Also, after the transfer susan and pep have the same amount of money
         self.assertEqual(get_user_balance(self.session, susan_id), get_user_balance(self.session, pep_id))
         self.assertEqual(75., get_user_balance(self.session, susan_id))
+
+    def test_check_transfer_is_symetric(self):
+        # REPEATED CODE AHEAD. TODO: REFACTOR
+        # Create the users
+        susan_uri = create_user(self.session, "susan", "0123456789ABCDEF", 100.0)
+        susan_id = susan_uri.split("/")[-1]
+        pep_uri = create_user(self.session, "pep", "0123456789ABCDEF", 50.0)
+        pep_id = pep_uri.split("/")[-1]
+
+        # Create the movements
+        # ID: 1
+        create_movement(self.session, susan_uri, -25,
+                                             movement_type=MovementType.TRANSFER_WITHDRAWAL,
+                                             commit=False)
+        # ID: 2
+        create_movement(self.session, pep_uri, 25,
+                                           movement_type=MovementType.TRANSFER_DEPOSIT,
+                                           commit=False)
+        # ID: 3
+        create_movement(self.session, pep_uri, 30,
+                                           movement_type=MovementType.TRANSFER_DEPOSIT,
+                                           commit=False)
+
+        # ID: 4
+        # A 0 money movement is not allowed
+        with self.assertRaises(ValueError):
+            create_movement(self.session, pep_uri, 0,
+                            movement_type=MovementType.TRANSFER_DEPOSIT,
+                            commit=False)
+
+        check_transfer_is_symetric(self.session, 1, 2)
+
+        with self.assertRaises(AsymmetricTransferException):
+            check_transfer_is_symetric(self.session, 1, 3)
+
+        with self.assertRaises(ValueError):
+            check_transfer_is_symetric(self.session, 3, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

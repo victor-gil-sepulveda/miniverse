@@ -1,4 +1,4 @@
-from miniverse.model.exceptions import NotEnoughMoneyException
+from miniverse.model.exceptions import NotEnoughMoneyException, AsymmetricTransferException
 from miniverse.model.model import User, Movement, Transfer, MovementType, TransferType
 from miniverse.model.schemas import UserSchema, MovementSchema, TransferSchema
 from miniverse.service.urldefines import USER_GET_URL, MOVEMENT_GET_URL, TRANSFER_GET_URL
@@ -61,6 +61,9 @@ def create_movement(session, user_uri, amount, movement_type, commit=True):
     if movement_type not in MovementType.all_values():
         raise ValueError(movement_type + " is not a proper MovementType.")
 
+    if amount == 0:
+        raise ValueError("If no money is moved, this is not a money movement!")
+
     # First we get the user id
     user_id = user_uri.split("/")[-1]
 
@@ -98,6 +101,20 @@ def get_movement(session, movement_id, expand=False):
     return movement_json
 
 
+def check_transfer_is_symetric(session, withdrawal_id, deposit_id):
+    """
+    Makes a couple of tests over the moved quantities.
+    """
+    w = get_movement(session, withdrawal_id)
+    d = get_movement(session, deposit_id)
+    if w["amount"] > 0:
+        raise ValueError("The withdrawn amount must be negative.")
+
+    if w["amount"] != -d["amount"]:
+        raise AsymmetricTransferException("In a transfer, the withdrawn amount and deposited amount must have same absolute value.")
+
+
+
 def create_transfer(session, withdrawal_uri, deposit_uri, comment, transfer_type):
     """
     Adds a transfer to the database. The movements have already been created.
@@ -110,6 +127,10 @@ def create_transfer(session, withdrawal_uri, deposit_uri, comment, transfer_type
     withdrawal_id = int(withdrawal_uri.split("/")[-1])
     deposit_id = int(deposit_uri.split("/")[-1])
 
+    # Check transfer is symmetric
+    check_transfer_is_symetric(session, withdrawal_id, deposit_id)
+
+    # Store the transfer and commit movements and transfer
     transfer = Transfer(withdrawal_id=withdrawal_id,
                         deposit_id=deposit_id,
                         comment=comment,
