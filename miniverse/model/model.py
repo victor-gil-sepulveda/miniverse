@@ -1,25 +1,35 @@
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Enum
-import enum
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
 
-class TransferType:
+class CheckableEnum(object):
+    @classmethod
+    def all_values(cls):
+        attrs = dir(cls)
+        enum_vals = []
+        for attr in attrs:
+            if "__" not in attr and attr.isupper():
+                enum_vals.append(attr)
+        return enum_vals
+
+
+class TransferType(CheckableEnum):
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
 
 
-class MovementType:
+class MovementType(CheckableEnum):
     TRANSFER_DEPOSIT = "TRANSFER_DEPOSIT"
     TRANSFER_WITHDRAWAL = "TRANSFER_WITHDRAWAL"
     FUNDS_DEPOSIT = "FUNDS_DEPOSIT"
     FUNDS_WITHDRAWAL = "FUNDS_WITHDRAWAL"
 
 
-class CreditCardStatus:
+class CreditCardStatus(CheckableEnum):
     INACTIVE = "INACTIVE"
     ACTIVE = "ACTIVE"
     CANCELLED = "CANCELLED"
@@ -68,6 +78,7 @@ class Movement(Base):
     user = relationship("User", foreign_keys=[user_name])
     type = Column(String(16), nullable=False) # Enum(MovementType)
     created = Column(DateTime, default=datetime.datetime.utcnow)
+
 
 class Transfer(Base):
     __tablename__ = TRANSFER_TABLE

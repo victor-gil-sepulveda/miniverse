@@ -1,3 +1,4 @@
+from gi._gi import Transfer
 from sqlalchemy.sql.expression import select
 
 from miniverse.model.exceptions import NotEnoughMoneyException
@@ -53,9 +54,12 @@ def update_user_funds(session, user_id, amount):
     session.query(User).filter_by(name=user_id).update({'funds': User.funds + amount})
 
 
-def create_movement(session, user_uri, amount, movement_type):
+def create_movement(session, user_uri, amount, movement_type, commit=True):
     """
     Registers a new money movement in the DB.
+    Checks if the movement is coherent with the user funds.
+    Only commits if 'commit' is set to true. This allows us to completely rollback
+    transfers.
     """
     # First we get the user id
     user_id = user_uri.split("/")[-1]
@@ -74,7 +78,8 @@ def create_movement(session, user_uri, amount, movement_type):
     update_user_funds(session, user_id, amount)
 
     # And go go go!
-    session.commit()
+    if commit:
+        session.commit()
     return MOVEMENT_GET_URL.format(movement_id=movement_id)
 
 
@@ -93,10 +98,16 @@ def get_movement(session, movement_id, expand=False):
     return movement_json
 
 
-def create_transfer():
-    pass
+def create_transfer(session, withdrawal_uri, deposit_uri, comment, type):
+    # Get the movement ids
+    withdrawal_id = int(withdrawal_uri.split("/")[-1])
+    deposit_id = int(deposit_uri.split("/")[-1])
+    transfer = Transfer(withdrawal_id=withdrawal_id,
+                        deposit_id=deposit_id,
+                        comment=comment,
+                        type=type)
 
 
-def get_transfer():
+def get_transfer(session, transfer_id, expand=False):
     pass
 

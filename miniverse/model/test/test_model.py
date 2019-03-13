@@ -4,7 +4,6 @@ import os
 import unittest
 import os.path
 import datetime
-
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 import miniverse.model.test as test_module
@@ -62,9 +61,7 @@ class TestModel(unittest.TestCase):
             cc_movement,
             transfer
         ])
-
         session.commit()
-
         self.session = session
 
     def test_model_loaded(self):
@@ -100,6 +97,11 @@ class TestModel(unittest.TestCase):
         expected = json.load(fp)
         self.maxDiff = None
         self.assertItemsEqual(data, expected)
+
+    def test_enums(self):
+        self.assertItemsEqual(['PRIVATE', 'PUBLIC'], TransferType.all_values())
+        self.assertIn("PUBLIC", TransferType.all_values())
+        self.assertNotIn("NOT PUBLIC", TransferType.all_values())
 
 if __name__ == '__main__':
     unittest.main()
