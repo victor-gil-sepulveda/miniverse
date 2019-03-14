@@ -8,9 +8,9 @@ services:
         ports:
             - "5000:5000"
     db:
-        build:
-            context: .
-            dockerfile: Dockerfile.db
+#        build:
+#            context: .
+#            dockerfile: Dockerfile.db
         image: mysql:5.7
         restart: always
         ports:

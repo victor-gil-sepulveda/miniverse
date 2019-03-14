@@ -67,7 +67,7 @@ class CreditCardTransaction(Base):
     __tablename__ = CCTRANSACTION_TABLE
     id = Column(Integer, primary_key=True, autoincrement=True)
     amount = Column(Float, nullable=False)
-    card_number = Column(Integer, ForeignKey(CREDITCARD_TABLE + '.number'))
+    card_number = Column(String(16), ForeignKey(CREDITCARD_TABLE + '.number'))
     card = relationship("CreditCard", foreign_keys=[card_number])
 
 
@@ -77,7 +77,7 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     user_phone = Column(String(32), ForeignKey(USER_TABLE + '.phone_number'))
     user = relationship("User", foreign_keys=[user_phone])
-    type = Column(String(16), nullable=False) # Enum(TransactionType)
+    type = Column(String(32), nullable=False) # Enum(TransactionType)
     created = Column(DateTime, default=datetime.datetime.utcnow)
 
 
