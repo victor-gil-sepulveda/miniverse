@@ -4,7 +4,8 @@ import unittest
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 from miniverse.control.operations import create_user, get_user, get_user_balance, create_movement, get_movement, \
-    update_user_funds, check_user_has_enough_money, create_transfer, get_transfer, check_transfer_is_symetric
+    update_user_funds, check_user_has_enough_money, create_transfer, get_transfer, check_transfer_is_symetric, \
+    get_movements_for_user
 from miniverse.model.exceptions import NotEnoughMoneyException, AsymmetricTransferException
 from miniverse.model.model import Base, MovementType, TransferType
 import miniverse.control.test as test_module
@@ -192,6 +193,33 @@ class TestOperations(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_transfer_is_symetric(self.session, 3, 1)
 
+    def test_get_movements_for_user(self):
+        susan_uri = create_user(self.session, "0000", "susan", "0123456789ABCDEF", 100.0)
+        susan_id = susan_uri.split("/")[-1]
+
+        pep_uri = create_user(self.session, "0001", "pep", "0123456789ABCDEF", 50.0)
+
+        create_movement(self.session, susan_uri, -25,
+                        movement_type=MovementType.FUNDS_WITHDRAWAL,
+                        commit=False)
+
+        create_movement(self.session, pep_uri, -25,
+                        movement_type=MovementType.FUNDS_WITHDRAWAL,
+                        commit=False)
+
+        create_movement(self.session, susan_uri, 10,
+                        movement_type=MovementType.FUNDS_DEPOSIT,
+                        commit=False)
+
+        create_movement(self.session, pep_uri, 10,
+                        movement_type=MovementType.FUNDS_DEPOSIT,
+                        commit=False)
+
+        create_movement(self.session, susan_uri, 3,
+                        movement_type=MovementType.FUNDS_DEPOSIT,
+                        commit=False)
+
+        print get_movements_for_user(self.session, susan_id)
 
 if __name__ == '__main__':
     unittest.main()

@@ -101,6 +101,16 @@ def get_movement(session, movement_id, expand=False):
     return movement_json
 
 
+def get_movements_for_user(session, user_id):
+    """
+    Returns all the transactions a user has performed.
+    """
+    result = session.query(Movement).filter(Movement.user_phone == user_id).all()
+    movement_schema = MovementSchema()
+    movements = [movement_schema.dump(r).data for r in result]
+    return movements
+
+
 def check_transfer_is_symetric(session, withdrawal_id, deposit_id):
     """
     Makes a couple of tests over the moved quantities.
