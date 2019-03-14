@@ -26,7 +26,7 @@ class TestV1API(unittest.TestCase):
         self.client = app.test_client
 
         # Init db
-        DbSessionHolder(TestV1API.REST_TEST_DB).reset()
+        DbSessionHolder('sqlite:///' + TestV1API.REST_TEST_DB).reset()
 
     def test_user_creation(self):
         endpoint = gen_resource_url(API_PREFIX, v1, USER_POST_URI)

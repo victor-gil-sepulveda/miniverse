@@ -1,3 +1,9 @@
+# Try it
+
+apt-get install docker
+apt-get install docker-compose
+
+
 
 ## Notes  
 * Each user can have associated options, like the current currency.

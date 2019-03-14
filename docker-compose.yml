@@ -1,0 +1,22 @@
+version: "2"
+services:
+    app:
+        build: .
+        image: miniverse
+        links:
+            - db
+        ports:
+            - "5000:5000"
+    db:
+        image: i686/mysql:latest
+        restart: always
+        ports:
+            - "32000:3306"
+        expose:
+            - "32000"
+        environment:
+            MYSQL_USER: user
+            MYSQL_PASSWORD: password
+            MYSQL_ROOT_PASSWORD': password
+        volumes:
+            - ./db:/docker-entrypoint-initdb.d/:ro

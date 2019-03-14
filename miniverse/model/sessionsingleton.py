@@ -21,8 +21,8 @@ class DbSessionHolder(Singleton):
     """
     Keeps a copy of the session maker of sqlalchemy to be used when needed.
     """
-    def __init__(self, db_name):
-        self.engine = create_engine('sqlite:///' + db_name)
+    def __init__(self, db_url):
+        self.engine = create_engine(db_url)
         self.Session = None
         self.reset()
 
