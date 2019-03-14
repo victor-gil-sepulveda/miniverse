@@ -9,6 +9,8 @@ from miniverse.control.operations import create_user, get_user_balance, create_m
 from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.rest.api import setup_rest_api, gen_resource_url, API_PREFIX
 from miniverse.service.rest.tools import parse_status
+from miniverse.service.urldefines import USER_POST_URI, USER_GET_URI, USER_GET_BALANCE_URI, MOVEMENT_POST_URI, \
+    TRANSFER_POST_URI, USER_GET_MOVEMENTS_URI, USER_GET_EXPANDED_MOVEMENTS_URI
 
 
 class TestV1API(unittest.TestCase):
@@ -27,7 +29,7 @@ class TestV1API(unittest.TestCase):
         DbSessionHolder(TestV1API.REST_TEST_DB).reset()
 
     def test_user_creation(self):
-        endpoint = gen_resource_url(API_PREFIX, v1, "/user")
+        endpoint = gen_resource_url(API_PREFIX, v1, USER_POST_URI)
 
         # Adding a new user returns 201
         response = self.client().post(endpoint, data=json.dumps({
@@ -37,7 +39,7 @@ class TestV1API(unittest.TestCase):
         }))
 
         self.assertEqual(status.HTTP_201_CREATED, parse_status(response.status))
-        self.assertEqual("/user/0000", response.location)
+        self.assertEqual(USER_GET_URI.format(user_id="0000"), response.location)
         self.assertDictEqual({"name": "susan", "phone_number": "0000", "pass_hash": "1111"}, json.loads(response.data))
 
         # Adding a user with an already stored phone number is not allowed
@@ -55,7 +57,7 @@ class TestV1API(unittest.TestCase):
                     "1413434",
                     233.05)
 
-        endpoint = gen_resource_url(API_PREFIX, v1, "/user/0000/balance")
+        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_BALANCE_URI.format(user_id="0000"))
         response = self.client().get(endpoint)
         expected = {
             "balance": 233.05,
@@ -72,7 +74,7 @@ class TestV1API(unittest.TestCase):
                     "1413434",
                     233.05)
 
-        endpoint = gen_resource_url(API_PREFIX, v1, "/movement")
+        endpoint = gen_resource_url(API_PREFIX, v1, MOVEMENT_POST_URI)
         response = self.client().post(endpoint, data=json.dumps({
             "user": "0000",
             "amount": 52,
@@ -119,7 +121,7 @@ class TestV1API(unittest.TestCase):
             "type": TransferType.PUBLIC
         }
 
-        endpoint = gen_resource_url(API_PREFIX, v1, "/transfer")
+        endpoint = gen_resource_url(API_PREFIX, v1, TRANSFER_POST_URI)
         response = self.client().post(endpoint, data=json.dumps(transfer_data))
         self.assertEqual("/transfer/1", response.headers["location"])
         finn_balance = get_user_balance(session, "0000")
@@ -137,11 +139,11 @@ class TestV1API(unittest.TestCase):
         create_movement(session, amount=3, user_uri=finn_uri, movement_type=MovementType.FUNDS_DEPOSIT)
         create_movement(session, amount=-4.05, user_uri=finn_uri, movement_type=MovementType.FUNDS_WITHDRAWAL)
 
-        endpoint = gen_resource_url(API_PREFIX, v1, finn_uri+"/movements")
+        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_MOVEMENTS_URI.format(user_id="0000"))
         response = self.client().get(endpoint)
         self.assertItemsEqual(["/movement/1", "/movement/2", "/movement/3"], json.loads(response.data))
 
-        endpoint = gen_resource_url(API_PREFIX, v1, finn_uri + "/movements?expand=true")
+        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_EXPANDED_MOVEMENTS_URI.format(user_id="0000"))
         response = self.client().get(endpoint)
         expected = [
             {"amount": 10.0, "id": 1, "type": "FUNDS_DEPOSIT", "user": "/user/0000"},
