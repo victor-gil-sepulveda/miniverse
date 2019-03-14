@@ -5,7 +5,7 @@ from flask_api import status
 
 from miniverse.model.model import MovementType, TransferType
 from miniverse.service.rest import v1
-from miniverse.control.operations import create_user, get_user_balance
+from miniverse.control.operations import create_user, get_user_balance, create_movement
 from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.rest.api import setup_rest_api, gen_resource_url, API_PREFIX
 from miniverse.service.rest.tools import parse_status
@@ -125,6 +125,34 @@ class TestV1API(unittest.TestCase):
         finn_balance = get_user_balance(session, "0000")
         jake_balance = get_user_balance(session, "0001")
         self.assertEqual((220.05, 73.0), (finn_balance, jake_balance))
+
+    def test_get_user_movements(self):
+        session = DbSessionHolder(TestV1API.REST_TEST_DB).get_session()
+        finn_uri = create_user(session,
+                               "0000",
+                               "Finn",
+                               "1413434",
+                               233.05)
+        create_movement(session, amount=10, user_uri=finn_uri, movement_type=MovementType.FUNDS_DEPOSIT)
+        create_movement(session, amount=3, user_uri=finn_uri, movement_type=MovementType.FUNDS_DEPOSIT)
+        create_movement(session, amount=-4.05, user_uri=finn_uri, movement_type=MovementType.FUNDS_WITHDRAWAL)
+
+        endpoint = gen_resource_url(API_PREFIX, v1, finn_uri+"/movements")
+        response = self.client().get(endpoint)
+        self.assertItemsEqual(["/movement/1", "/movement/2", "/movement/3"], json.loads(response.data))
+
+        endpoint = gen_resource_url(API_PREFIX, v1, finn_uri + "/movements?expand=true")
+        response = self.client().get(endpoint)
+        expected = [
+            {"amount": 10.0, "id": 1, "type": "FUNDS_DEPOSIT", "user": "/user/0000"},
+            {"amount": 3.0, "id": 2, "type": "FUNDS_DEPOSIT", "user": "/user/0000"},
+            {"amount": -4.05, "id": 3, "type": "FUNDS_WITHDRAWAL", "user": "/user/0000"}
+        ]
+        parsed_response = json.loads(response.data)
+        for mov in parsed_response:
+            del mov["created"]
+        self.assertItemsEqual(expected, parsed_response)
+
 
 if __name__ == "__main__":
     unittest.main()

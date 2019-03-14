@@ -4,8 +4,8 @@ import unittest
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 from miniverse.control.operations import create_user, get_user, get_user_balance, create_movement, get_movement, \
-    update_user_funds, check_user_has_enough_money, create_transfer, get_transfer, check_transfer_is_symetric, \
-    get_movements_for_user
+    update_user_funds, check_user_has_enough_money, create_transfer, get_transfer, check_transfer_is_symmetric, \
+    get_user_movements
 from miniverse.model.exceptions import NotEnoughMoneyException, AsymmetricTransferException
 from miniverse.model.model import Base, MovementType, TransferType
 import miniverse.control.test as test_module
@@ -185,13 +185,13 @@ class TestOperations(unittest.TestCase):
                             movement_type=MovementType.TRANSFER_DEPOSIT,
                             commit=False)
 
-        check_transfer_is_symetric(self.session, 1, 2)
+        check_transfer_is_symmetric(self.session, 1, 2)
 
         with self.assertRaises(AsymmetricTransferException):
-            check_transfer_is_symetric(self.session, 1, 3)
+            check_transfer_is_symmetric(self.session, 1, 3)
 
         with self.assertRaises(ValueError):
-            check_transfer_is_symetric(self.session, 3, 1)
+            check_transfer_is_symmetric(self.session, 3, 1)
 
     def test_get_movements_for_user(self):
         susan_uri = create_user(self.session, "0000", "susan", "0123456789ABCDEF", 100.0)
@@ -219,7 +219,36 @@ class TestOperations(unittest.TestCase):
                         movement_type=MovementType.FUNDS_DEPOSIT,
                         commit=False)
 
-        print get_movements_for_user(self.session, susan_id)
+        expand_expected = [
+            {
+                'amount': -25.0,
+                'type': 'FUNDS_WITHDRAWAL',
+                'user': '/user/0000',
+                'id': 1
+            },
+            {
+                'amount': 10.0,
+                'type': 'FUNDS_DEPOSIT',
+                'user': '/user/0000',
+                'id': 3
+            },
+            {
+                'amount': 3.0,
+                'type': 'FUNDS_DEPOSIT',
+                'user': '/user/0000',
+                'id': 5
+            }
+        ]
+
+        movements = get_user_movements(self.session, susan_id, expand=True)
+        for mov in movements:
+            del mov["created"]
+
+        self.assertItemsEqual(expand_expected, movements)
+
+        expected = ['/movement/1', '/movement/3', '/movement/5']
+        movements = get_user_movements(self.session, susan_id, expand=False)
+        self.assertItemsEqual(expected, movements)
 
 if __name__ == '__main__':
     unittest.main()

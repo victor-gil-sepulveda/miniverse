@@ -101,17 +101,21 @@ def get_movement(session, movement_id, expand=False):
     return movement_json
 
 
-def get_movements_for_user(session, user_id):
+def get_user_movements(session, user_id, expand=False):
     """
     Returns all the transactions a user has performed.
     """
-    result = session.query(Movement).filter(Movement.user_phone == user_id).all()
-    movement_schema = MovementSchema()
-    movements = [movement_schema.dump(r).data for r in result]
+    if expand:
+        result = session.query(Movement).filter(Movement.user_phone == user_id).all()
+        movement_schema = MovementSchema()
+        movements = [movement_schema.dump(r).data for r in result]
+    else:
+        result = session.query(Movement.id).filter(Movement.user_phone == user_id).all()
+        movements = [MOVEMENT_GET_URI.format(movement_id=r.id) for r in result]
     return movements
 
 
-def check_transfer_is_symetric(session, withdrawal_id, deposit_id):
+def check_transfer_is_symmetric(session, withdrawal_id, deposit_id):
     """
     Makes a couple of tests over the moved quantities.
     """
@@ -137,7 +141,7 @@ def create_transfer(session, withdrawal_uri, deposit_uri, comment, transfer_type
     deposit_id = int(deposit_uri.split("/")[-1])
 
     # Check transfer is symmetric
-    check_transfer_is_symetric(session, withdrawal_id, deposit_id)
+    check_transfer_is_symmetric(session, withdrawal_id, deposit_id)
 
     # Store the transfer and commit movements and transfer
     transfer = Transfer(withdrawal_id=withdrawal_id,

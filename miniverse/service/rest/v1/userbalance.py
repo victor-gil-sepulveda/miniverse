@@ -1,8 +1,8 @@
-from flask import jsonify, make_response, request
+from flask import jsonify, make_response
 from flask_api import status
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
-from miniverse.control.operations import create_user, get_user_balance
+from miniverse.control.operations import get_user_balance
 from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.urldefines import USER_GET_URI
 

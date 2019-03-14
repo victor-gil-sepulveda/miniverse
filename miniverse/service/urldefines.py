@@ -1,5 +1,6 @@
 USER_GET_URI = "/user/{user_id}"
 USER_GET_BALANCE_URI = "/user/{user_id}"
+USER_GET_MOVEMENTS_URI = "/user/{user_id}/movements"
 MOVEMENT_GET_URI = "/movement/{movement_id}"
 TRANSFER_GET_URI = "/transfer/{transfer_id}"
 CREDIT_CARD_GET_URL = "/transfer/{card_number}"

@@ -8,3 +8,8 @@ def parse_status(status):
 
     if isinstance(status, basestring):
         return int(status.split()[0])
+
+
+def py_to_flask(url):
+    new = url.replace("{", "<").replace("}", ">")
+    return new
