@@ -1,3 +1,6 @@
+from time import sleep
+import pymysql
+import sqlalchemy
 from flask import Flask
 from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.rest.api import setup_rest_api
@@ -10,7 +13,7 @@ DBTYPE = 'sqlite:///'
 DB_URL = DBTYPE + DB_NAME
 
 # for mysql docker image
-DB_URL = "mysql://user:password@db:32000/miniverse"
+DB_URL = "mysql+pymysql://root:password@db:3306/miniverse"
 
 app = Flask(__name__) # create the application instance :)
 
@@ -25,7 +28,19 @@ app.config.update(dict(
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 #Init the DB Session
-DbSessionHolder(DB_URL)
+connected = False
+while not connected:
+    try:
+        DbSessionHolder(DB_URL)
+        connected = True
+        print "Connected to DB"
+    except pymysql.err.OperationalError:
+        sleep(1)
+        print "*", str(e)
+    except sqlalchemy.exc.OperationalError, e:
+        sleep(1)
+        print str(e)
+
 
 # Init the REST API
 setup_rest_api(app)

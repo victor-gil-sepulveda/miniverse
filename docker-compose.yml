@@ -8,15 +8,19 @@ services:
         ports:
             - "5000:5000"
     db:
-        image: i686/mysql:latest
+        build:
+            context: .
+            dockerfile: Dockerfile.db
+        image: mysql:5.7
         restart: always
         ports:
             - "32000:3306"
         expose:
             - "32000"
         environment:
-            MYSQL_USER: user
+            MYSQL_USER: root
             MYSQL_PASSWORD: password
-            MYSQL_ROOT_PASSWORD': password
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_DATABASE: miniverse
         volumes:
-            - ./db:/docker-entrypoint-initdb.d/:ro
+            - ./db:/var/lib/mysql
