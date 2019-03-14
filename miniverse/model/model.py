@@ -22,7 +22,7 @@ class TransferType(CheckableEnum):
     PRIVATE = "PRIVATE"
 
 
-class MovementType(CheckableEnum):
+class TransactionType(CheckableEnum):
     TRANSFER_DEPOSIT = "TRANSFER_DEPOSIT"
     TRANSFER_WITHDRAWAL = "TRANSFER_WITHDRAWAL"
     FUNDS_DEPOSIT = "FUNDS_DEPOSIT"
@@ -37,9 +37,9 @@ class CreditCardStatus(CheckableEnum):
 
 USER_TABLE = "user"
 TRANSFER_TABLE = "transfer"
-MOVEMENT_TABLE = "movement"
+TRANSACTION_TABLE = "transaction"
 CREDITCARD_TABLE = "creditcard"
-CCMOVEMENT_TABLE = "creditcard_movement"
+CCTRANSACTION_TABLE = "creditcard_transaction"
 
 
 class User(Base):
@@ -63,21 +63,21 @@ class CreditCard(Base):
     user = relationship("User", foreign_keys=[user_phone], backref="cards")
 
 
-class CreditCardMovement(Base):
-    __tablename__ = CCMOVEMENT_TABLE
+class CreditCardTransaction(Base):
+    __tablename__ = CCTRANSACTION_TABLE
     id = Column(Integer, primary_key=True, autoincrement=True)
     amount = Column(Float, nullable=False)
     card_number = Column(Integer, ForeignKey(CREDITCARD_TABLE + '.number'))
     card = relationship("CreditCard", foreign_keys=[card_number])
 
 
-class Movement(Base):
-    __tablename__ = MOVEMENT_TABLE
+class Transaction(Base):
+    __tablename__ = TRANSACTION_TABLE
     id = Column(Integer, primary_key=True, autoincrement=True)
     amount = Column(Float, nullable=False)
     user_phone = Column(String(32), ForeignKey(USER_TABLE + '.phone_number'))
     user = relationship("User", foreign_keys=[user_phone])
-    type = Column(String(16), nullable=False) # Enum(MovementType)
+    type = Column(String(16), nullable=False) # Enum(TransactionType)
     created = Column(DateTime, default=datetime.datetime.utcnow)
 
 
@@ -87,11 +87,11 @@ class Transfer(Base):
 
     # Constraint users are not equal, and amounts are equal with opposed sign
     # and types are TRANSFER_DEPOSIT and TRANSFER_WITHDRAWAL
-    withdrawal_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'))
-    withdrawal = relationship("Movement", foreign_keys=[withdrawal_id])
+    withdrawal_id = Column(Integer, ForeignKey(TRANSACTION_TABLE + '.id'))
+    withdrawal = relationship("Transaction", foreign_keys=[withdrawal_id])
 
-    deposit_id = Column(Integer, ForeignKey(MOVEMENT_TABLE + '.id'))
-    deposit = relationship("Movement", foreign_keys=[deposit_id])
+    deposit_id = Column(Integer, ForeignKey(TRANSACTION_TABLE + '.id'))
+    deposit = relationship("Transaction", foreign_keys=[deposit_id])
 
     # Transfer comment
     comment = Column(String(256), nullable=False)

@@ -3,11 +3,11 @@ import os
 import unittest
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
-from miniverse.control.operations import create_user, get_user, get_user_balance, create_movement, get_movement, \
+from miniverse.control.operations import create_user, get_user, get_user_balance, create_transaction, get_transaction, \
     update_user_funds, check_user_has_enough_money, create_transfer, get_transfer, check_transfer_is_symmetric, \
-    get_user_movements
+    get_user_transactions
 from miniverse.model.exceptions import NotEnoughMoneyException, AsymmetricTransferException
-from miniverse.model.model import Base, MovementType, TransferType
+from miniverse.model.model import Base, TransactionType, TransferType
 import miniverse.control.test as test_module
 
 
@@ -45,28 +45,28 @@ class TestOperations(unittest.TestCase):
         peter_balance = get_user_balance(self.session, user_json["phone_number"])
         self.assertEqual(3.0, peter_balance)
 
-    def test_movement_creation_retrieval(self):
+    def test_transaction_creation_retrieval(self):
         # Resource creation
         dean_uri = create_user(self.session, "0000", "dean", "0123456789ABCDEF", 100.0)
-        movement_uri = create_movement(self.session, dean_uri, -10, movement_type=MovementType.FUNDS_WITHDRAWAL)
-        self.assertEqual('/movement/1', movement_uri)
+        transaction_uri = create_transaction(self.session, dean_uri, -10, transaction_type=TransactionType.FUNDS_WITHDRAWAL)
+        self.assertEqual('/transaction/1', transaction_uri)
 
         # Resource retrieval
-        movement_id = int(movement_uri.split("/")[-1])
-        movement_json = get_movement(self.session, movement_id)
-        del movement_json["created"]
+        transaction_id = int(transaction_uri.split("/")[-1])
+        transaction_json = get_transaction(self.session, transaction_id)
+        del transaction_json["created"]
         expected_json = {
             'amount': -10.0,
             'type': 'FUNDS_WITHDRAWAL',
             'user': '/user/0000',
             'id': 1
         }
-        self.assertDictEqual(expected_json, movement_json)
+        self.assertDictEqual(expected_json, transaction_json)
 
         # Retrieval with expansion
-        movement_json = get_movement(self.session, movement_id, expand=True)
-        del movement_json["created"]
-        del movement_json["user"]["created"]
+        transaction_json = get_transaction(self.session, transaction_id, expand=True)
+        del transaction_json["created"]
+        del transaction_json["user"]["created"]
         expected_json = {
             'amount': -10.0,
             'type': 'FUNDS_WITHDRAWAL',
@@ -79,7 +79,7 @@ class TestOperations(unittest.TestCase):
             },
             'id': 1
         }
-        self.assertDictEqual(expected_json, movement_json)
+        self.assertDictEqual(expected_json, transaction_json)
 
     def test_check_user_has_enough_money(self):
         pep_uri = create_user(self.session, "0000", "pep", "0123456789ABCDEF", 100.0)
@@ -104,15 +104,15 @@ class TestOperations(unittest.TestCase):
         pep_uri = create_user(self.session, "0001", "pep", "0123456789ABCDEF", 50.0)
         pep_id = pep_uri.split("/")[-1]
 
-        # Create the movements
-        susan_movement_uri = create_movement(self.session, susan_uri, -25,
-                                             movement_type=MovementType.TRANSFER_WITHDRAWAL,
-                                             commit=False)
-        pep_movement_uri = create_movement(self.session, pep_uri, 25,
-                                           movement_type=MovementType.TRANSFER_DEPOSIT,
-                                           commit=False)
+        # Create the transactions
+        susan_transaction_uri = create_transaction(self.session, susan_uri, -25,
+                                                   transaction_type=TransactionType.TRANSFER_WITHDRAWAL,
+                                                   commit=False)
+        pep_transaction_uri = create_transaction(self.session, pep_uri, 25,
+                                                 transaction_type=TransactionType.TRANSFER_DEPOSIT,
+                                                 commit=False)
 
-        transfer_uri = create_transfer(self.session, susan_movement_uri, pep_movement_uri,
+        transfer_uri = create_transfer(self.session, susan_transaction_uri, pep_transaction_uri,
                                        "Great lunch!!",
                                        TransferType.PUBLIC)
         self.assertEqual("/transfer/1", transfer_uri)
@@ -122,14 +122,14 @@ class TestOperations(unittest.TestCase):
         del transfer_json["created"]
         expected = {
             'comment': 'Great lunch!!',
-            'deposit': '/movement/2',
-            'withdrawal': '/movement/1',
+            'deposit': '/transaction/2',
+            'withdrawal': '/transaction/1',
             'type': 'PUBLIC',
             'id': 1
         }
         self.assertDictEqual(expected, transfer_json)
 
-        # Try expanding the movements
+        # Try expanding the transactions
         transfer_json = get_transfer(self.session, 1, expand=True)
         expected = {
             'comment': 'Great lunch!!',
@@ -164,25 +164,25 @@ class TestOperations(unittest.TestCase):
         pep_uri = create_user(self.session, "0001", "pep", "0123456789ABCDEF", 50.0)
         pep_id = pep_uri.split("/")[-1]
 
-        # Create the movements
+        # Create the transactions
         # ID: 1
-        create_movement(self.session, susan_uri, -25,
-                        movement_type=MovementType.TRANSFER_WITHDRAWAL,
+        create_transaction(self.session, susan_uri, -25,
+                        transaction_type=TransactionType.TRANSFER_WITHDRAWAL,
                         commit=False)
         # ID: 2
-        create_movement(self.session, pep_uri, 25,
-                        movement_type=MovementType.TRANSFER_DEPOSIT,
+        create_transaction(self.session, pep_uri, 25,
+                        transaction_type=TransactionType.TRANSFER_DEPOSIT,
                         commit=False)
         # ID: 3
-        create_movement(self.session, pep_uri, 30,
-                        movement_type=MovementType.TRANSFER_DEPOSIT,
+        create_transaction(self.session, pep_uri, 30,
+                        transaction_type=TransactionType.TRANSFER_DEPOSIT,
                         commit=False)
 
         # ID: 4
-        # A 0 money movement is not allowed
+        # A 0 money transaction is not allowed
         with self.assertRaises(ValueError):
-            create_movement(self.session, pep_uri, 0,
-                            movement_type=MovementType.TRANSFER_DEPOSIT,
+            create_transaction(self.session, pep_uri, 0,
+                            transaction_type=TransactionType.TRANSFER_DEPOSIT,
                             commit=False)
 
         check_transfer_is_symmetric(self.session, 1, 2)
@@ -193,30 +193,30 @@ class TestOperations(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_transfer_is_symmetric(self.session, 3, 1)
 
-    def test_get_movements_for_user(self):
+    def test_get_transactions_for_user(self):
         susan_uri = create_user(self.session, "0000", "susan", "0123456789ABCDEF", 100.0)
         susan_id = susan_uri.split("/")[-1]
 
         pep_uri = create_user(self.session, "0001", "pep", "0123456789ABCDEF", 50.0)
 
-        create_movement(self.session, susan_uri, -25,
-                        movement_type=MovementType.FUNDS_WITHDRAWAL,
+        create_transaction(self.session, susan_uri, -25,
+                        transaction_type=TransactionType.FUNDS_WITHDRAWAL,
                         commit=False)
 
-        create_movement(self.session, pep_uri, -25,
-                        movement_type=MovementType.FUNDS_WITHDRAWAL,
+        create_transaction(self.session, pep_uri, -25,
+                        transaction_type=TransactionType.FUNDS_WITHDRAWAL,
                         commit=False)
 
-        create_movement(self.session, susan_uri, 10,
-                        movement_type=MovementType.FUNDS_DEPOSIT,
+        create_transaction(self.session, susan_uri, 10,
+                        transaction_type=TransactionType.FUNDS_DEPOSIT,
                         commit=False)
 
-        create_movement(self.session, pep_uri, 10,
-                        movement_type=MovementType.FUNDS_DEPOSIT,
+        create_transaction(self.session, pep_uri, 10,
+                        transaction_type=TransactionType.FUNDS_DEPOSIT,
                         commit=False)
 
-        create_movement(self.session, susan_uri, 3,
-                        movement_type=MovementType.FUNDS_DEPOSIT,
+        create_transaction(self.session, susan_uri, 3,
+                        transaction_type=TransactionType.FUNDS_DEPOSIT,
                         commit=False)
 
         expand_expected = [
@@ -240,15 +240,15 @@ class TestOperations(unittest.TestCase):
             }
         ]
 
-        movements = get_user_movements(self.session, susan_id, expand=True)
-        for mov in movements:
+        transactions = get_user_transactions(self.session, susan_id, expand=True)
+        for mov in transactions:
             del mov["created"]
 
-        self.assertItemsEqual(expand_expected, movements)
+        self.assertItemsEqual(expand_expected, transactions)
 
-        expected = ['/movement/1', '/movement/3', '/movement/5']
-        movements = get_user_movements(self.session, susan_id, expand=False)
-        self.assertItemsEqual(expected, movements)
+        expected = ['/transaction/1', '/transaction/3', '/transaction/5']
+        transactions = get_user_transactions(self.session, susan_id, expand=False)
+        self.assertItemsEqual(expected, transactions)
 
 if __name__ == '__main__':
     unittest.main()

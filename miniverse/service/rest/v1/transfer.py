@@ -2,9 +2,9 @@ from flask import jsonify, make_response, request
 from flask_api import status
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
-from miniverse.control.operations import create_transfer, get_movement, create_movement
+from miniverse.control.operations import create_transfer, get_transaction, create_transaction
 from miniverse.model.exceptions import NotEnoughMoneyException
-from miniverse.model.model import MovementType
+from miniverse.model.model import TransactionType
 from miniverse.model.sessionsingleton import DbSessionHolder
 
 
@@ -15,26 +15,26 @@ class Transfer(Resource):
 
     def post(self):
         """
-        Creates a money movement.
+        Creates a money transaction.
         """
         json_data = request.get_json(force=True)
         session = DbSessionHolder().get_session()
 
         try:
 
-            withdrawal_uri = create_movement(
+            withdrawal_uri = create_transaction(
                 session,
                 json_data["sender"],
                 -int(json_data["amount"]),
-                MovementType.TRANSFER_WITHDRAWAL,
+                TransactionType.TRANSFER_WITHDRAWAL,
                 commit=False
             )
 
-            deposit_uri = create_movement(
+            deposit_uri = create_transaction(
                 session,
                 json_data["receiver"],
                 int(json_data["amount"]),
-                MovementType.TRANSFER_DEPOSIT,
+                TransactionType.TRANSFER_DEPOSIT,
                 commit=False
             )
 

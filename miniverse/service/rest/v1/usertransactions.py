@@ -1,7 +1,7 @@
 from flask import jsonify, make_response
 from flask_api import status
 from flask_restful import Resource
-from miniverse.control.operations import get_user_movements
+from miniverse.control.operations import get_user_transactions
 from miniverse.model.sessionsingleton import DbSessionHolder
 from webargs import fields
 from flask import request
@@ -12,7 +12,7 @@ get_args = {
 }
 
 
-class UserMovements(Resource):
+class UserTransactions(Resource):
 
     def __init__(self):
         pass
@@ -25,9 +25,9 @@ class UserMovements(Resource):
         args = parser.parse(get_args, request)
 
         try:
-            movements = get_user_movements(session, user_id, expand=args["expand"])
+            transactions = get_user_transactions(session, user_id, expand=args["expand"])
 
-            response = make_response(jsonify(movements),
+            response = make_response(jsonify(transactions),
                                      status.HTTP_201_CREATED)
             response.autocorrect_location_header = False
             return response

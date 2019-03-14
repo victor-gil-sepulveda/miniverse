@@ -6,7 +6,7 @@
 it is easier to handle 'likes' etc.
 
 * Some constraints could be added to the database (ex. creating a 
-movement with amount = 0.). In here we are checking the constraints
+transaction with amount = 0.). In here we are checking the constraints
 in the python part.
 
 * One could use Enums instead of regular strings, but strings are easier to serialize/deserialize,

@@ -3,14 +3,14 @@ import unittest
 from flask.app import Flask
 from flask_api import status
 
-from miniverse.model.model import MovementType, TransferType
+from miniverse.model.model import TransactionType, TransferType
 from miniverse.service.rest import v1
-from miniverse.control.operations import create_user, get_user_balance, create_movement
+from miniverse.control.operations import create_user, get_user_balance, create_transaction
 from miniverse.model.sessionsingleton import DbSessionHolder
 from miniverse.service.rest.api import setup_rest_api, gen_resource_url, API_PREFIX
 from miniverse.service.rest.tools import parse_status
-from miniverse.service.urldefines import USER_POST_URI, USER_GET_URI, USER_GET_BALANCE_URI, MOVEMENT_POST_URI, \
-    TRANSFER_POST_URI, USER_GET_MOVEMENTS_URI, USER_GET_EXPANDED_MOVEMENTS_URI
+from miniverse.service.urldefines import USER_POST_URI, USER_GET_URI, USER_GET_BALANCE_URI, TRANSACTION_POST_URI, \
+    TRANSFER_POST_URI, USER_GET_TRANSACTIONS_URI, USER_GET_EXPANDED_TRANSACTIONS_URI
 
 
 class TestV1API(unittest.TestCase):
@@ -66,7 +66,7 @@ class TestV1API(unittest.TestCase):
 
         self.assertDictEqual(expected, json.loads(response.data))
 
-    def test_create_movement(self):
+    def test_create_transaction(self):
         session = DbSessionHolder(TestV1API.REST_TEST_DB).get_session()
         create_user(session,
                     "0000",
@@ -74,13 +74,13 @@ class TestV1API(unittest.TestCase):
                     "1413434",
                     233.05)
 
-        endpoint = gen_resource_url(API_PREFIX, v1, MOVEMENT_POST_URI)
+        endpoint = gen_resource_url(API_PREFIX, v1, TRANSACTION_POST_URI)
         response = self.client().post(endpoint, data=json.dumps({
             "user": "0000",
             "amount": 52,
-            "type": MovementType.FUNDS_DEPOSIT
+            "type": TransactionType.FUNDS_DEPOSIT
         }))
-        self.assertEqual("/movement/1", response.headers["location"])
+        self.assertEqual("/transaction/1", response.headers["location"])
 
         # The user balance has changed
         finn_balance = get_user_balance(session, "0000") # Finn's phone is his ID
@@ -89,13 +89,13 @@ class TestV1API(unittest.TestCase):
         error_response_1 = self.client().post(endpoint, data=json.dumps({
             "user": "0000",
             "amount": 0,
-            "type": MovementType.FUNDS_DEPOSIT
+            "type": TransactionType.FUNDS_DEPOSIT
         }))
-        self.assertEqual('{"error":"If no money is moved, this is not a money movement!"}', error_response_1.data.strip())
+        self.assertEqual('{"error":"If no money is moved, this is not a money transaction!"}', error_response_1.data.strip())
         error_response_2 = self.client().post(endpoint, data=json.dumps({
             "user": "0000",
             "amount": -300,
-            "type": MovementType.FUNDS_DEPOSIT
+            "type": TransactionType.FUNDS_DEPOSIT
         }))
         self.assertEqual('{"error":"Not enough money in your wallet!"}', error_response_2.data.strip())
 
@@ -128,22 +128,22 @@ class TestV1API(unittest.TestCase):
         jake_balance = get_user_balance(session, "0001")
         self.assertEqual((220.05, 73.0), (finn_balance, jake_balance))
 
-    def test_get_user_movements(self):
+    def test_get_user_transactions(self):
         session = DbSessionHolder(TestV1API.REST_TEST_DB).get_session()
         finn_uri = create_user(session,
                                "0000",
                                "Finn",
                                "1413434",
                                233.05)
-        create_movement(session, amount=10, user_uri=finn_uri, movement_type=MovementType.FUNDS_DEPOSIT)
-        create_movement(session, amount=3, user_uri=finn_uri, movement_type=MovementType.FUNDS_DEPOSIT)
-        create_movement(session, amount=-4.05, user_uri=finn_uri, movement_type=MovementType.FUNDS_WITHDRAWAL)
+        create_transaction(session, amount=10, user_uri=finn_uri, transaction_type=TransactionType.FUNDS_DEPOSIT)
+        create_transaction(session, amount=3, user_uri=finn_uri, transaction_type=TransactionType.FUNDS_DEPOSIT)
+        create_transaction(session, amount=-4.05, user_uri=finn_uri, transaction_type=TransactionType.FUNDS_WITHDRAWAL)
 
-        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_MOVEMENTS_URI.format(user_id="0000"))
+        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_TRANSACTIONS_URI.format(user_id="0000"))
         response = self.client().get(endpoint)
-        self.assertItemsEqual(["/movement/1", "/movement/2", "/movement/3"], json.loads(response.data))
+        self.assertItemsEqual(["/transaction/1", "/transaction/2", "/transaction/3"], json.loads(response.data))
 
-        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_EXPANDED_MOVEMENTS_URI.format(user_id="0000"))
+        endpoint = gen_resource_url(API_PREFIX, v1, USER_GET_EXPANDED_TRANSACTIONS_URI.format(user_id="0000"))
         response = self.client().get(endpoint)
         expected = [
             {"amount": 10.0, "id": 1, "type": "FUNDS_DEPOSIT", "user": "/user/0000"},

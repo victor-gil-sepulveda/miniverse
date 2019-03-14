@@ -32,10 +32,10 @@
     {
         "comment": "This is your half. That was a great dinner!!", 
         "created": "2010-05-24T00:00:00+00:00", 
-        "deposit": "/movement/2", 
+        "deposit": "/transaction/2",
         "id": 1, 
         "type": "PUBLIC", 
-        "withdrawal": "/movement/1"
+        "withdrawal": "/transaction/1"
     }, 
     {
         "active_since": null, 

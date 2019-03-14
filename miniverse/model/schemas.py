@@ -1,7 +1,7 @@
 from marshmallow_sqlalchemy import ModelSchema
 from marshmallow import fields
-from miniverse.model.model import User, Movement, Transfer, CreditCard, CreditCardMovement
-from miniverse.service.urldefines import USER_GET_URI, MOVEMENT_GET_URI, CREDIT_CARD_GET_URL
+from miniverse.model.model import User, Transaction, Transfer, CreditCard, CreditCardTransaction
+from miniverse.service.urldefines import USER_GET_URI, TRANSACTION_GET_URI, CREDIT_CARD_GET_URL
 
 
 class UserUri(fields.Field):
@@ -9,9 +9,9 @@ class UserUri(fields.Field):
         return USER_GET_URI.format(user_id=user_id)
 
 
-class MovementUri(fields.Field):
-    def _serialize(self, movement_id, attr, obj, **kwargs):
-        return MOVEMENT_GET_URI.format(movement_id=movement_id)
+class TransactionUri(fields.Field):
+    def _serialize(self, transaction_id, attr, obj, **kwargs):
+        return TRANSACTION_GET_URI.format(transaction_id=transaction_id)
 
 
 class CardUri(fields.Field):
@@ -25,16 +25,16 @@ class UserSchema(ModelSchema):
         exclude = ("cards",)
 
 
-class MovementSchema(ModelSchema):
+class TransactionSchema(ModelSchema):
     user = UserUri(attribute="user_phone", dump_only=True)
 
     class Meta:
-        model = Movement
+        model = Transaction
 
 
 class TransferSchema(ModelSchema):
-    withdrawal = MovementUri(attribute="withdrawal_id", dump_only=True)
-    deposit = MovementUri(attribute="deposit_id", dump_only=True)
+    withdrawal = TransactionUri(attribute="withdrawal_id", dump_only=True)
+    deposit = TransactionUri(attribute="deposit_id", dump_only=True)
 
     class Meta:
         model = Transfer
@@ -47,8 +47,8 @@ class CreditCardSchema(ModelSchema):
         model = CreditCard
 
 
-class CreditCardMovementSchema(ModelSchema):
+class CreditCardTransactionSchema(ModelSchema):
     card = CardUri(attribute="card_id", dump_only=True)
 
     class Meta:
-        model = CreditCardMovement
+        model = CreditCardTransaction
